@@ -300,84 +300,10 @@ function exerciseSummaryCard(e,i){
     `;
 }
 
-  $('workoutView').innerHTML = `
-<div class="card">
 
-    <div class="exercise-head">
-
-        <div>
-
-            <div class="eyebrow">
-                Workout
-            </div>
-
-            <h2>${esc(day)}</h2>
-
-        </div>
-
-        <span class="badge">
-            Exercise ${currentExerciseIndex + 1}
-            of
-            ${exercises.length}
-        </span>
-
-    </div>
-
-</div>
-`
-+
-exerciseCard(
-    exercise,
-    currentExerciseIndex
-);
 
 }
-function exerciseCard(e,i){
-  const last=lastEntry(e.name), goal=goalFor(e.name,e.type), range=rangeFor(e.type), safe=encodeURIComponent(e.name);
-  return `<article class="card" id="ex-${i}"><div class="exercise-head"><h3>${esc(e.name)}</h3><span class="badge">3 × ${range.min}–${range.max}</span></div>
-    <div class="last-goal"><div class="goalbox"><div class="stat-label">Last workout</div><div class="goalbig">${last?esc(last.weight)+' kg':'No record'}</div><div>${last?`${last.s1}/${last.s2}/${last.s3}`:'Start today'}</div></div><div class="goalbox"><div class="stat-label">Today's goal</div><div class="goalbig ${goal.increase?'green':''}">
-    ${goal.increase
-?
-'Increase Weight'
-:
-esc(goal.weight||'Set Weight')+' kg'
-}</div><div>${esc(goal.text)}</div></div></div>
-    ${goal.increase?'<div class="complete-strip">Top of the range achieved. Enter the new machine or dumbbell weight below.</div>':''}
-    <label>Weight (kg)</label><input class="field" id="weight-${i}" inputmode="decimal" type="number" min="0" step="0.1" value="${last?esc(last.weight):''}" placeholder="e.g. 50">
-    <div class="grid3"><div><div class="set-label">SET 1</div><input class="field" id="s1-${i}" inputmode="numeric" type="number" min="0" max="99" placeholder="Reps"></div><div><div class="set-label">SET 2</div><input class="field" id="s2-${i}" inputmode="numeric" type="number" min="0" max="99" placeholder="Reps"></div><div><div class="set-label">SET 3</div><input class="field" id="s3-${i}" inputmode="numeric" type="number" min="0" max="99" placeholder="Reps"></div></div>
-    <button
-    type="button"
-    class="btn secondary"
-    onclick="
-      const x=
-      document.getElementById(
-      'notes-wrap-${i}'
-      );
 
-      x.style.display=
-      x.style.display==='none'
-      ? 'block'
-      : 'none';
-    "
->
-Add Note
-</button>
-
-<div
-    id="notes-wrap-${i}"
-    style="display:none;"
->
-
-    <textarea
-        class="field"
-        id="notes-${i}"
-        rows="2"
-        placeholder="Optional"
-    ></textarea>
-
-</div>
-    <div class="btn-row"><button class="btn" onclick="saveExercise(${i},'${safe}','${e.type}')">Save & Next</button><button class="btn secondary" onclick="openHistory('${safe}')">History</button></div></article>`;
-}
 
 function openExercise(encodedName){
 
@@ -545,17 +471,6 @@ function saveFromModal(encodedName){
 
 }
   
-function saveExercise(i,encodedName,type){
-  const name=decodeURIComponent(encodedName), weight=Number($(`weight-${i}`).value), s1=Number($(`s1-${i}`).value),s2=Number($(`s2-${i}`).value),s3=Number($(`s3-${i}`).value),notes=$(`notes-${i}`).value.trim(),goal=goalFor(name,type);
-  if(!(weight>0)||![s1,s2,s3].every(x=>x>0)){toast('Enter a weight and all 3 sets');return}
-  const p=profileData();p.history[name]=p.history[name]||[];p.history[name].push({id:uid(),timestamp:Date.now(),date:new Date().toLocaleDateString(),weight,s1,s2,s3,notes,targetRep:goal.rep,type});persist();
-
-currentExerciseIndex++;
-
-renderWorkout();
-
-toast(`${name} saved`);
-}
 
 function renderProgress(){
   const exs=allKnownExercises(), selected=$('progressExercise')?.value||exs[0]?.name||'';
@@ -595,20 +510,14 @@ function importBackup(event){const file=event.target.files[0];if(!file)return;co
 
 $('profileSelect').addEventListener('change',()=>{
 
-    currentExerciseIndex = 0;
-
     initialiseSelectors();
 
     renderAll();
 
 });
-$('daySelect').addEventListener('change',()=>{
 
-    currentExerciseIndex = 0;
-
-    renderWorkout();
-
-});
+$('daySelect').addEventListener('change',renderWorkout);
+  
 document.querySelectorAll('.navbtn').forEach(b=>b.addEventListener('click',()=>showView(b.dataset.view)));
 initialiseSelectors();renderAll();
 if('serviceWorker' in navigator)navigator.serviceWorker.register('./sw.js').catch(()=>{});
