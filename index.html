@@ -97,13 +97,32 @@ const $=id=>document.getElementById(id);
 const esc=s=>String(s??'').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
 const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,8);
 
-function freshState(){return {version:4,profiles:{Oriana:{custom:{},history:{}}}},Chiara:{custom:{},history:{}}}}}
+function freshState(){
+    return {
+        version: 4,
+        profiles: {
+            Oriana: {
+                custom:{},
+                history:{}
+            },
+            Chiara: {
+                custom:{},
+                history:{}
+            }
+        }
+    };
+}
 function loadState(){try{const parsed=JSON.parse(localStorage.getItem(STORE_KEY)||'null');return parsed&&parsed.profiles?parsed:freshState()}catch(e){return freshState()}}
 let state=loadState();
 let currentExerciseIndex = 0;
 function persist(){localStorage.setItem(STORE_KEY,JSON.stringify(state))}
 function profileName(){return $('profileSelect').value}
-function profileData(){const p=profileName();state.profiles[p]=state.profiles[p]||{nextDay:0,custom:{},history:{}};return state.profiles[p]}
+function profileData(){const p=profileName();state.profiles[p] =
+    state.profiles[p] ||
+    {
+        custom:{},
+        history:{}
+    };};return state.profiles[p]}
 function exercisesFor(dayName){const p=profileData();return [...BASE_WORKOUTS[dayName],...((p.custom&&p.custom[dayName])||[])]}
 function historyFor(name){return profileData().history[name]||[]}
 function lastEntry(name){const h=historyFor(name);return h[h.length-1]||null}
@@ -115,7 +134,13 @@ function goalFor(name,type){
   if(!last)return {rep:range.min,text:`${range.min}/${range.min}/${range.min}`,increase:false,weight:''};
   const currentTarget=Number(last.targetRep)||Math.max(range.min,Math.min(range.max,Math.min(last.s1,last.s2,last.s3)));
   const achieved=last.s1>=currentTarget&&last.s2>=currentTarget&&last.s3>=currentTarget;
-  if(currentTarget>=range.max&&achieved)return {rep:range.max,text:''✅ Goal achieved. Choose a new weight.'',increase:true,weight:last.weight};
+  if(currentTarget>=range.max&&achieved)
+    return {
+    rep: range.max,
+    text: '✅ Goal achieved. Choose a new weight.',
+    increase: true,
+    weight: last.weight
+};
   const next=achieved?Math.min(range.max,currentTarget+1):currentTarget;
   return {rep:next,text:`${next}/${next}/${next}`,increase:false,weight:last.weight};
 }
@@ -124,8 +149,15 @@ function allKnownExercises(){const map=new Map();DAYS.forEach(day=>exercisesFor(
 function currentDay(){return $('daySelect').value}
 
 function initialiseSelectors(){
-  $('daySelect').innerHTML=DAYS.map(d=>`<option>${esc(d)}</option>`).join('');
-  $('daySelect').value=DAYS[profileData().nextDay||0];
+
+    $('daySelect').innerHTML =
+        DAYS.map(
+            d => `<option>${esc(d)}</option>`
+        ).join('');
+
+    $('daySelect').value =
+        DAYS[0];
+
 }
 function showView(name){
   document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
@@ -147,17 +179,7 @@ function renderAll(){
     }
 
 }
-function renderDashboard(){
-  const p=profileData(), next=DAYS[p.nextDay||0], entries=Object.values(p.history).flat();
-  const ready=allKnownExercises().filter(e=>isReady(e.name,e.type));
-  const latest=entries.slice().sort((a,b)=>b.timestamp-a.timestamp)[0];
-  const prs=allKnownExercises().map(e=>{const h=historyFor(e.name);const best=h.reduce((m,x)=>Number(x.weight)>Number(m?.weight||0)?x:m,null);return best?{name:e.name,weight:best.weight,reps:`${best.s1}/${best.s2}/${best.s3}`}:null}).filter(Boolean).sort((a,b)=>Number(b.weight)-Number(a.weight)).slice(0,5);
-  $('dashboardView').innerHTML=`
-    <div class="card"><div class="eyebrow">Next in your queue</div><h2>${esc(next)}</h2><p class="muted">Missed a weekday? No problem. The queue stays here until the workout is completed.</p><div class="btn-row"><button class="btn" onclick="openQueuedWorkout()">Start this workout</button><button class="btn secondary" onclick="skipQueue()">Move to next day</button></div></div>
-    <div class="grid2"><div class="card"><div class="stat-label">Exercises ready to increase</div><div class="stat-value green">${ready.length}</div></div><div class="card"><div class="stat-label">Last logged session</div><div class="stat-value" style="font-size:16px">${latest?esc(latest.date):'None yet'}</div></div></div>
-    <div class="card"><h3>🔥 Ready to increase</h3>${ready.length?ready.map(e=>`<div class="ready-item"><span>${esc(e.name)}</span><span class="badge">${esc(goalFor(e.name,e.type).weight)} kg</span></div>`).join(''):'<div class="empty">Nothing yet. Reach 12/12/12 for compounds or 14/14/14 for isolations.</div>'}</div>
-    <div class="card"><h3>🏆 Weight PRs</h3>${prs.length?prs.map(x=>`<div class="ready-item"><span>${esc(x.name)}</span><span><b>${esc(x.weight)} kg</b><div class="small muted">${x.reps}</div></span></div>`).join(''):'<div class="empty">PRs will appear after the first logged workout.</div>'}</div>`;
-}
+
 rAll();toast('Queue moved forward')}
 
 function renderWorkout(){
@@ -194,13 +216,37 @@ function renderWorkout(){
 
         return;
     }
-  $('workoutView').innerHTML=`<div class="card"><div class="exercise-head"><div><div class="eyebrow">Workout</div><h2>${esc(day)}</h2></div><span class="badge">${completed}/${exs.length} logged today</span></div><div class="btn-row"><button class="btn success" onclick="completeWorkout()">Complete & advance queue</button></div></div>`+
- exerciseCard(
-   <div class="badge">
-Exercise ${currentExerciseIndex+1}
-of
-${exercisesFor(currentDay()).length}
+  $('workoutView').innerHTML = `
+<div class="card">
+
+    <div class="exercise-head">
+
+        <div>
+
+            <div class="eyebrow">
+                Workout
+            </div>
+
+            <h2>${esc(day)}</h2>
+
+        </div>
+
+        <span class="badge">
+            Exercise ${currentExerciseIndex + 1}
+            of
+            ${exercises.length}
+        </span>
+
+    </div>
+
 </div>
+`
++
+exerciseCard(
+    exercise,
+    currentExerciseIndex
+);
+exerciseCard(
     exercise,
     currentExerciseIndex
 )
@@ -294,13 +340,11 @@ function renderSettings(){
   const custom=Object.entries(profileData().custom||{}).flatMap(([day,items])=>items.map((e,index)=>({day,e,index})));
   $('settingsView').innerHTML=`<div class="card"><h2>Exercises</h2><p class="muted">Custom exercises belong only to ${esc(profileName())}.</p><button class="btn" onclick="openAddExercise()">Add custom exercise</button>${custom.length?custom.map(x=>`<div class="custom-row"><div><b>${esc(x.e.name)}</b><div class="small muted">${esc(x.day)} · ${x.e.type}</div></div><button class="btn danger smallbtn" onclick="removeCustom('${encodeURIComponent(x.day)}',${x.index})">Remove</button></div>`).join(''):'<div class="empty">No custom exercises.</div>'}</div>
   <div class="card"><h2>Backup & restore</h2><p class="muted">Data is stored separately in this browser. Export regularly, especially before clearing Safari data or changing phones.</p><div class="btn-row"><button class="btn" onclick="exportBackup()">Export backup</button><label class="btn secondary" style="display:inline-block;color:white">Import backup<input type="file" accept="application/json" style="display:none" onchange="importBackup(event)"></label></div></div>
-  <div class="card"><h2>Queue</h2><p>Next workout: <b>${esc(DAYS[profileData().nextDay||0])}</b></p><button class="btn secondary" onclick="resetQueue()">Reset queue to Day 1</button></div>
   <div class="card"><h2>About progression</h2><p class="muted">Compounds use 3 × 8–12. Isolations use 3 × 6–14. A target remains in place until all three sets reach it. At the top of the range, the app asks you to choose a new weight.</p></div>`;
 }
 function openAddExercise(){$('addContent').innerHTML=`<h2>Add exercise for ${esc(profileName())}</h2><label>Name</label><input id="addName" class="field" placeholder="Exercise name"><label>Day</label><select id="addDay" class="control">${DAYS.map(d=>`<option>${esc(d)}</option>`).join('')}</select><label>Type</label><select id="addType" class="control"><option value="compound">Compound · 8–12</option><option value="isolation">Isolation · 6–14</option></select><div class="btn-row"><button class="btn" onclick="commitAddExercise()">Add exercise</button><button class="btn secondary" onclick="closeModal('addModal')">Cancel</button></div>`;$('addModal').classList.add('open')}
 function commitAddExercise(){const name=$('addName').value.trim(),day=$('addDay').value,type=$('addType').value;if(!name){toast('Enter an exercise name');return}if(allKnownExercises().some(e=>e.name.toLowerCase()===name.toLowerCase())){toast('That exercise already exists');return}const p=profileData();p.custom[day]=p.custom[day]||[];p.custom[day].push({name,type,custom:true});persist();closeModal('addModal');renderAll();toast('Exercise added')}
 function removeCustom(dayEncoded,index){const day=decodeURIComponent(dayEncoded);if(!confirm('Remove this custom exercise from the workout? Its saved history will remain.'))return;profileData().custom[day].splice(index,1);persist();renderAll();toast('Custom exercise removed')}
-function resetQueue(){profileData().nextDay=0;persist();$('daySelect').value=DAYS[0];;renderAll();toast('Queue reset')}
 function exportBackup(){const blob=new Blob([JSON.stringify(state,null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`gym-tracker-backup-${new Date().toISOString().slice(0,10)}.json`;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)}
 function importBackup(event){const file=event.target.files[0];if(!file)return;const reader=new FileReader();reader.onload=()=>{try{const incoming=JSON.parse(reader.result);if(!incoming.profiles)throw new Error();state=incoming;persist();initialiseSelectors();renderAll();toast('Backup imported')}catch(e){alert('This is not a valid Gym Tracker backup.')}};reader.readAsText(file)}
 
