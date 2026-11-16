@@ -94,7 +94,13 @@ const BASE_WORKOUTS = {
 const DAYS = Object.keys(BASE_WORKOUTS);
 const STORE_KEY='gymTrackerFinishedV4';
 const $=id=>document.getElementById(id);
-const esc=s=>String(s??'').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
+const esc = s =>
+    String(s ?? '')
+    .replace(/&/g,'&amp;')
+    .replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;')
+    .replace(/'/g,'&#39;');
 const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,8);
 
 function freshState(){
@@ -117,12 +123,20 @@ let state=loadState();
 let currentExerciseIndex = 0;
 function persist(){localStorage.setItem(STORE_KEY,JSON.stringify(state))}
 function profileName(){return $('profileSelect').value}
-function profileData(){const p=profileName();state.profiles[p] =
-    state.profiles[p] ||
-    {
-        custom:{},
-        history:{}
-    };};return state.profiles[p]}
+function profileData(){
+
+    const p = profileName();
+
+    state.profiles[p] =
+        state.profiles[p] ||
+        {
+            custom:{},
+            history:{}
+        };
+
+    return state.profiles[p];
+
+}
 function exercisesFor(dayName){const p=profileData();return [...BASE_WORKOUTS[dayName],...((p.custom&&p.custom[dayName])||[])]}
 function historyFor(name){return profileData().history[name]||[]}
 function lastEntry(name){const h=historyFor(name);return h[h.length-1]||null}
@@ -180,7 +194,6 @@ function renderAll(){
 
 }
 
-rAll();toast('Queue moved forward')}
 
 function renderWorkout(){
 
@@ -193,7 +206,7 @@ function renderWorkout(){
 
     if(!exercise){
 
-        workoutView.innerHTML=
+        $('workoutView').innerHTML =
         `
         <div class="card">
 
@@ -246,10 +259,7 @@ exerciseCard(
     exercise,
     currentExerciseIndex
 );
-exerciseCard(
-    exercise,
-    currentExerciseIndex
-)
+
 }
 function exerciseCard(e,i){
   const last=lastEntry(e.name), goal=goalFor(e.name,e.type), range=rangeFor(e.type), safe=encodeURIComponent(e.name);
@@ -307,9 +317,6 @@ currentExerciseIndex++;
 renderWorkout();
 
 toast(`${name} saved`);
-}
-function completeWorkout(){
-  const selectedIndex=DAYS.indexOf(currentDay()),p=profileData();p.nextDay=(selectedIndex+1)%DAYS.length;persist();$('daySelect').value=DAYS[p.nextDay];renderAll();showView('dashboard');toast('Workout completed. Queue advanced')
 }
 
 function renderProgress(){
