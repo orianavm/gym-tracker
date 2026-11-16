@@ -37,10 +37,19 @@ function goal(last,type){const min=type==='compound'?8:6;const max=type==='compo
 function readyList(profile){const d=data();let r=[];Object.keys(d[profile]||{}).forEach(ex=>{let h=d[profile][ex];let last=h[h.length-1];if(!last)return;let iso=['Cable lateral raise','Rear-delt fly','Incline dumbbell curl','Hammer curl','Leg extension','Leg curl','Calf raise','Cable / pec-deck fly','Lateral raise','Triceps pushdown','Overhead triceps extension','Face pull / rear-delt fly','EZ-bar or cable curl','Preacher curl','Seated leg curl','Hip abduction','Cable crunch','Hanging knee raise'];let max=iso.includes(ex)?14:12;if(last.s1>=max&&last.s2>=max&&last.s3>=max)r.push(ex);});return r;}
 function render(){const p=profile.value,w=day.value,d=data();const ready=readyList(p);dashboard.innerHTML=`<div class='card'><h3>🔥 Ready To Increase</h3>${ready.length?ready.join('<br>'):'None yet'}</div>`;let out='';(workouts[w]||[]).forEach((e,i)=>{let hist=((d[p]||{})[e[0]]||[]);let last=hist[hist.length-1];let g=goal(last,e[1]);out+=`<div class='card'><h3>${e[0]}</h3><div><b>Last Workout</b><br>${last?last.weight+'kg | '+last.s1+'/'+last.s2+'/'+last.s3:'None recorded'}</div><br><div class='goal'><b>Today's Goal</b><br>${last?last.weight+'kg':''}<br>${g.target}<br>${g.msg}</div><input id='w${i}' type='number' step='0.5' value='${last?last.weight:''}' placeholder='Weight'><input id='s1${i}' type='number' placeholder='Set 1'><input id='s2${i}' type='number' placeholder='Set 2'><input id='s3${i}' type='number' placeholder='Set 3'><textarea id='n${i}' placeholder='Notes (optional)'></textarea><button onclick="saveEx(${i},'${e[0]}')">Save</button><button onclick="historyEx('${e[0]}')">History</button></div>`});content.innerHTML=out;}
 function saveEx(i,name){let d=data(),p=profile.value;d[p]=d[p]||{};d[p][name]=d[p][name]||[];d[p][name].push({date:new Date().toLocaleDateString(),weight:document.getElementById('w'+i).value,s1:+document.getElementById('s1'+i).value,s2:+document.getElementById('s2'+i).value,s3:+document.getElementById('s3'+i).value,notes:document.getElementById('n'+i).value});save(d);render();}
-function historyEx(name){let d=data(),p=profile.value,h=((d[p]||{})[name]||[]);let text=name+'
+function historyEx(name){
+    let d=data(),
+        p=profile.value,
+        h=((d[p]||{})[name]||[]);
 
-';h.forEach((x,i)=>text+=`${i+1}. ${x.date} | ${x.weight}kg | ${x.s1}/${x.s2}/${x.s3}${x.notes?' | '+x.notes:''}
-`);alert(text)}
+    let text=name+'\\n\\n';
+
+    h.forEach((x,i)=>
+        text += `${i+1}. ${x.date} | ${x.weight}kg | ${x.s1}/${x.s2}/${x.s3}${x.notes ? ' | ' + x.notes : ''}\\n`
+    );
+
+    alert(text);
+}
 profile.onchange=render;day.onchange=render;render();
 </script>
 </body></html>
