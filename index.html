@@ -48,6 +48,8 @@
   </main>
 </div>
 
+let currentExerciseIndex = 0;
+  
 <nav class="bottom-nav">
 
   <button class="navbtn active" data-view="workout">
@@ -97,7 +99,7 @@ const $=id=>document.getElementById(id);
 const esc=s=>String(s??'').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
 const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,8);
 
-function freshState(){return {version:4,profiles:{Oriana:{nextDay:0,custom:{},history:{}},Chiara:{nextDay:0,custom:{},history:{}}}}}
+function freshState(){return {version:4,profiles:{Oriana:{custom:{},history:{}}}},Chiara:{custom:{},history:{}}}}}
 function loadState(){try{const parsed=JSON.parse(localStorage.getItem(STORE_KEY)||'null');return parsed&&parsed.profiles?parsed:freshState()}catch(e){return freshState()}}
 let state=loadState();
 function persist(){localStorage.setItem(STORE_KEY,JSON.stringify(state))}
@@ -135,7 +137,17 @@ function showView(name){
 function toast(msg){const t=$('toast');t.textContent=msg;t.style.display='block';clearTimeout(toast.timer);toast.timer=setTimeout(()=>t.style.display='none',1800)}
 function closeModal(id){$(id).classList.remove('open')}
 
-function renderAll(){renderDashboard();renderWorkout();renderSettings();if($('progressView').classList.contains('active'))renderProgress()}
+function renderAll(){
+
+    renderWorkout();
+
+    renderSettings();
+
+    if($('progressView').classList.contains('active')){
+        renderProgress();
+    }
+
+}
 function renderDashboard(){
   const p=profileData(), next=DAYS[p.nextDay||0], entries=Object.values(p.history).flat();
   const ready=allKnownExercises().filter(e=>isReady(e.name,e.type));
@@ -147,14 +159,47 @@ function renderDashboard(){
     <div class="card"><h3>🔥 Ready to increase</h3>${ready.length?ready.map(e=>`<div class="ready-item"><span>${esc(e.name)}</span><span class="badge">${esc(goalFor(e.name,e.type).weight)} kg</span></div>`).join(''):'<div class="empty">Nothing yet. Reach 12/12/12 for compounds or 14/14/14 for isolations.</div>'}</div>
     <div class="card"><h3>🏆 Weight PRs</h3>${prs.length?prs.map(x=>`<div class="ready-item"><span>${esc(x.name)}</span><span><b>${esc(x.weight)} kg</b><div class="small muted">${x.reps}</div></span></div>`).join(''):'<div class="empty">PRs will appear after the first logged workout.</div>'}</div>`;
 }
-function openQueuedWorkout(){$('daySelect').value=DAYS[profileData().nextDay||0];renderWorkout();showView('workout')}
-function skipQueue(){const p=profileData();p.nextDay=(p.nextDay+1)%DAYS.length;persist();$('daySelect').value=DAYS[p.nextDay];renderAll();toast('Queue moved forward')}
+rAll();toast('Queue moved forward')}
 
 function renderWorkout(){
-  const day=currentDay(), exs=exercisesFor(day), today=new Date().toDateString();
-  const completed=exs.filter(e=>historyFor(e.name).some(x=>new Date(x.timestamp).toDateString()===today)).length;
+
+    const day=currentDay();
+
+    const exercises=exercisesFor(day);
+
+    const exercise=
+    exercises[currentExerciseIndex];
+
+    if(!exercise){
+
+        workoutView.innerHTML=
+        `
+        <div class="card">
+
+            <h2>✅ Workout Complete</h2>
+
+            <p>All exercises logged.</p>
+
+            <button
+                class="btn"
+                onclick="
+                    currentExerciseIndex=0;
+                    renderWorkout();
+                "
+            >
+                Start Again
+            </button>
+
+        </div>
+        `;
+
+        return;
+    }
   $('workoutView').innerHTML=`<div class="card"><div class="exercise-head"><div><div class="eyebrow">Workout</div><h2>${esc(day)}</h2></div><span class="badge">${completed}/${exs.length} logged today</span></div><div class="btn-row"><button class="btn success" onclick="completeWorkout()">Complete & advance queue</button></div></div>`+
-  exs.map((e,i)=>exerciseCard(e,i)).join('');
+ exerciseCard(
+    exercise,
+    currentExerciseIndex
+)
 }
 function exerciseCard(e,i){
   const last=lastEntry(e.name), goal=goalFor(e.name,e.type), range=rangeFor(e.type), safe=encodeURIComponent(e.name);
@@ -209,7 +254,7 @@ function renderSettings(){
 function openAddExercise(){$('addContent').innerHTML=`<h2>Add exercise for ${esc(profileName())}</h2><label>Name</label><input id="addName" class="field" placeholder="Exercise name"><label>Day</label><select id="addDay" class="control">${DAYS.map(d=>`<option>${esc(d)}</option>`).join('')}</select><label>Type</label><select id="addType" class="control"><option value="compound">Compound · 8–12</option><option value="isolation">Isolation · 6–14</option></select><div class="btn-row"><button class="btn" onclick="commitAddExercise()">Add exercise</button><button class="btn secondary" onclick="closeModal('addModal')">Cancel</button></div>`;$('addModal').classList.add('open')}
 function commitAddExercise(){const name=$('addName').value.trim(),day=$('addDay').value,type=$('addType').value;if(!name){toast('Enter an exercise name');return}if(allKnownExercises().some(e=>e.name.toLowerCase()===name.toLowerCase())){toast('That exercise already exists');return}const p=profileData();p.custom[day]=p.custom[day]||[];p.custom[day].push({name,type,custom:true});persist();closeModal('addModal');renderAll();toast('Exercise added')}
 function removeCustom(dayEncoded,index){const day=decodeURIComponent(dayEncoded);if(!confirm('Remove this custom exercise from the workout? Its saved history will remain.'))return;profileData().custom[day].splice(index,1);persist();renderAll();toast('Custom exercise removed')}
-function resetQueue(){profileData().nextDay=0;persist();$('daySelect').value=DAYS[0];renderAll();toast('Queue reset')}
+function resetQueue(){profileData().nextDay=0;persist();$('daySelect').value=DAYS[0];;renderAll();toast('Queue reset')}
 function exportBackup(){const blob=new Blob([JSON.stringify(state,null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`gym-tracker-backup-${new Date().toISOString().slice(0,10)}.json`;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)}
 function importBackup(event){const file=event.target.files[0];if(!file)return;const reader=new FileReader();reader.onload=()=>{try{const incoming=JSON.parse(reader.result);if(!incoming.profiles)throw new Error();state=incoming;persist();initialiseSelectors();renderAll();toast('Backup imported')}catch(e){alert('This is not a valid Gym Tracker backup.')}};reader.readAsText(file)}
 
