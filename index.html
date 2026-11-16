@@ -249,8 +249,7 @@ function exerciseSummaryCard(e){
     const done =
         historyFor(e.name)
             .some(x =>
-                new Date(x.timestamp)
-                .toDateString() === today
+                new Date(x.timestamp).toDateString() === today
             );
 
     return `
@@ -267,13 +266,11 @@ function exerciseSummaryCard(e){
                     </h3>
 
                     <div class="small muted">
-
                         ${
                             last
                             ? `${last.weight}kg • ${last.s1}/${last.s2}/${last.s3}`
                             : 'No previous record'
                         }
-
                     </div>
 
                 </div>
