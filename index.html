@@ -69,6 +69,11 @@
 <div id="historyModal" class="modal"><div class="sheet"><div id="historyContent"></div><button class="btn secondary" onclick="closeModal('historyModal')">Close</button></div></div>
 <div id="editModal" class="modal"><div class="sheet"><div id="editContent"></div></div></div>
 <div id="addModal" class="modal"><div class="sheet"><div id="addContent"></div></div></div>
+<div id="exerciseModal" class="modal">
+    <div class="sheet">
+        <div id="exerciseContent"></div>
+    </div>
+</div>
 <div id="toast" class="toast"></div>
 
 <script>
@@ -119,7 +124,6 @@ function freshState(){
 }
 function loadState(){try{const parsed=JSON.parse(localStorage.getItem(STORE_KEY)||'null');return parsed&&parsed.profiles?parsed:freshState()}catch(e){return freshState()}}
 let state=loadState();
-let currentExerciseIndex = 0;
 function persist(){localStorage.setItem(STORE_KEY,JSON.stringify(state))}
 function profileName(){return $('profileSelect').value}
 function profileData(){
@@ -193,41 +197,109 @@ function renderAll(){
 
 }
 
-
 function renderWorkout(){
 
-    const day=currentDay();
+    const day = currentDay();
 
-    const exercises=exercisesFor(day);
+    const exercises = exercisesFor(day);
 
-    const exercise=
-    exercises[currentExerciseIndex];
+    const today = new Date().toDateString();
 
-    if(!exercise){
+    const completed = exercises.filter(e =>
+        historyFor(e.name).some(x =>
+            new Date(x.timestamp).toDateString() === today
+        )
+    ).length;
 
-        $('workoutView').innerHTML =
-        `
+    $('workoutView').innerHTML = `
+
         <div class="card">
 
-            <h2>✅ Workout Complete</h2>
+            <div class="exercise-head">
 
-            <p>All exercises logged.</p>
+                <div>
 
-            <button
-                class="btn"
-                onclick="
-                    currentExerciseIndex=0;
-                    renderWorkout();
-                "
-            >
-                Start Again
-            </button>
+                    <div class="eyebrow">
+                        Workout
+                    </div>
+
+                    <h2>${esc(day)}</h2>
+
+                </div>
+
+                <span class="badge">
+                    ${completed} / ${exercises.length}
+                    completed
+                </span>
+
+            </div>
 
         </div>
-        `;
 
-        return;
-    }
+        ${exercises.map((e,i)=>exerciseSummaryCard(e,i)).join('')}
+
+    `;
+}
+
+function exerciseSummaryCard(e,i){
+
+    const last = lastEntry(e.name);
+
+    const safe = encodeURIComponent(e.name);
+
+    const today = new Date().toDateString();
+
+    const done =
+        historyFor(e.name)
+            .some(x =>
+                new Date(x.timestamp)
+                .toDateString() === today
+            );
+
+    return `
+
+        <div class="card">
+
+            <div class="exercise-head">
+
+                <div>
+
+                    <h3>
+                        ${done ? '✅' : '⬜'}
+                        ${esc(e.name)}
+                    </h3>
+
+                    <div class="small muted">
+
+                        ${
+                            last
+                            ?
+                            `${last.weight}kg • ${last.s1}/${last.s2}/${last.s3}`
+                            :
+                            'No previous record'
+                        }
+
+                    </div>
+
+                </div>
+
+                <button
+                    class="btn"
+                    onclick="openExercise('${safe}')">
+
+                    
+
+                    ${done ? 'Edit' : 'Log'}
+
+                </button>
+
+            </div>
+
+        </div>
+
+    `;
+}
+
   $('workoutView').innerHTML = `
 <div class="card">
 
@@ -306,6 +378,173 @@ Add Note
 </div>
     <div class="btn-row"><button class="btn" onclick="saveExercise(${i},'${safe}','${e.type}')">Save & Next</button><button class="btn secondary" onclick="openHistory('${safe}')">History</button></div></article>`;
 }
+
+function openExercise(encodedName){
+
+    const name =
+        decodeURIComponent(encodedName);
+
+    const ex =
+        allKnownExercises()
+            .find(x => x.name === name);
+
+    const last =
+        lastEntry(name);
+
+    const goal =
+        goalFor(name,ex.type);
+
+    $('exerciseContent').innerHTML = `
+
+        <h2>${esc(name)}</h2>
+
+        <p>
+
+            Last:
+
+            ${
+                last
+                ?
+                `${last.weight}kg • ${last.s1}/${last.s2}/${last.s3}`
+                :
+                'No record'
+            }
+
+        </p>
+
+        <p>
+
+            Goal:
+
+            ${goal.text}
+
+        </p>
+
+        <label>Weight</label>
+
+        <input
+            id="modalWeight"
+            class="field"
+            type="number"
+            value="${last?last.weight:''}">
+
+        <div class="grid3">
+
+            <input
+                id="modalS1"
+                class="field"
+                type="number"
+                placeholder="Set 1">
+
+            <input
+                id="modalS2"
+                class="field"
+                type="number"
+                placeholder="Set 2">
+
+            <input
+                id="modalS3"
+                class="field"
+                type="number"
+                placeholder="Set 3">
+
+        </div>
+
+        <div class="btn-row">
+
+            <button
+                class="btn"
+                onclick="saveFromModal('${encodedName}')">
+
+                Save
+
+            </button>
+
+            <button
+                class="btn secondary"
+                onclick="closeModal('exerciseModal')">
+
+                Cancel
+
+            </button>
+
+        </div>
+
+    `;
+
+    $('exerciseModal')
+        .classList
+        .add('open');
+}
+
+function saveFromModal(encodedName){
+
+    const name =
+        decodeURIComponent(encodedName);
+
+    const ex =
+        allKnownExercises()
+            .find(x => x.name === name);
+
+    const goal =
+        goalFor(name,ex.type);
+
+    const weight =
+        Number($('modalWeight').value);
+
+    const s1 =
+        Number($('modalS1').value);
+
+    const s2 =
+        Number($('modalS2').value);
+
+    const s3 =
+        Number($('modalS3').value);
+
+    if(
+        !(weight > 0)
+        ||
+        ![s1,s2,s3].every(x=>x>0)
+    ){
+        toast('Complete all fields');
+        return;
+    }
+
+    const p = profileData();
+
+    p.history[name] =
+        p.history[name] || [];
+
+    p.history[name].push({
+
+        id: uid(),
+
+        timestamp: Date.now(),
+
+        date: new Date()
+            .toLocaleDateString(),
+
+        weight,
+        s1,
+        s2,
+        s3,
+
+        targetRep: goal.rep,
+
+        type: ex.type
+
+    });
+
+    persist();
+
+    closeModal('exerciseModal');
+
+    renderWorkout();
+
+    toast('Saved');
+
+}
+  
 function saveExercise(i,encodedName,type){
   const name=decodeURIComponent(encodedName), weight=Number($(`weight-${i}`).value), s1=Number($(`s1-${i}`).value),s2=Number($(`s2-${i}`).value),s3=Number($(`s3-${i}`).value),notes=$(`notes-${i}`).value.trim(),goal=goalFor(name,type);
   if(!(weight>0)||![s1,s2,s3].every(x=>x>0)){toast('Enter a weight and all 3 sets');return}
