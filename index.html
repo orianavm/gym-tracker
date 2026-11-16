@@ -51,10 +51,26 @@ content.innerHTML=out;}
 function saveExercise(i,n){let d=getData(),p=profile.value; d[p]=d[p]||{}; d[p][n]=d[p][n]||[];
 d[p][n].push({date:new Date().toLocaleDateString(),weight:+document.getElementById('w'+i).value,s1:+document.getElementById('a'+i).value,s2:+document.getElementById('b'+i).value,s3:+document.getElementById('c'+i).value});
 saveData(d); loadWorkout();}
-function showHistory(n){let d=getData(),p=profile.value,h=((d[p]||{})[n]||[]); alert(n+'
+function showHistory(n){
+  let d=getData(),
+      p=profile.value,
+      h=((d[p]||{})[n]||[]);
 
-'+h.map(x=>x.date+' | '+x.weight+'kg | '+x.s1+'/'+x.s2+'/'+x.s3).join('
-'));}
+  alert(
+    n + "\\n\\n" +
+    h.map(x =>
+      x.date +
+      " | " +
+      x.weight +
+      "kg | " +
+      x.s1 +
+      "/" +
+      x.s2 +
+      "/" +
+      x.s3
+    ).join("\\n")
+  );
+}
 function addExercise(){let name=prompt('Exercise name'); if(!name)return; let dayName=prompt('Day number (1-5)'); let type=prompt('compound or isolation'); let key=Object.keys(workouts)[dayName-1]; workouts[key].push([name,type]); loadWorkout();}
 function exportData(){let a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(getData())]));a.download='gym_backup.json';a.click();}
 function importData(e){let r=new FileReader();r.onload=()=>{saveData(JSON.parse(r.result));alert('Imported');};r.readAsText(e.target.files[0]);}
