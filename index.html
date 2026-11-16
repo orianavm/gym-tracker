@@ -203,11 +203,9 @@ function renderWorkout(){
 
     const exercises = exercisesFor(day);
 
-    const today = new Date().toDateString();
-
     const completed = exercises.filter(e =>
         historyFor(e.name).some(x =>
-            new Date(x.timestamp).toDateString() === today
+            new Date(x.timestamp).toDateString() === new Date().toDateString()
         )
     ).length;
 
@@ -228,18 +226,16 @@ function renderWorkout(){
                 </div>
 
                 <span class="badge">
-                    ${completed} / ${exercises.length}
-                    completed
+                    ${completed} / ${exercises.length} completed
                 </span>
 
             </div>
 
         </div>
 
-        ${exercises.map((e,i)=>exerciseSummaryCard(e,i)).join('')}
+        ${exercises.map(e => exerciseSummaryCard(e)).join('')}
 
     `;
-
 }
 
 function exerciseSummaryCard(e,i){
