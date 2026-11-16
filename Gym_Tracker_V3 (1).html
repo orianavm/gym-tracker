@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Gym Tracker V3</title>
+<style>
+body{font-family:Arial,sans-serif;background:#121212;color:#fff;margin:0;padding:15px}
+.card{background:#1f1f1f;border-radius:12px;padding:12px;margin:10px 0}
+input,select,button{padding:8px;border-radius:8px;margin:4px}
+button{background:#3b82f6;color:white;border:none}
+.small{color:#ccc;font-size:.9em}
+</style></head><body>
+<h1>💪 Gym Tracker V3</h1>
+<div class='card'>
+<select id='profile'><option>Oriana</option><option>Chiara</option></select>
+<select id='day'></select>
+<button onclick='loadWorkout()'>Load Workout</button>
+<button onclick='addExercise()'>➕ Add Exercise</button>
+<button onclick='exportData()'>Export</button>
+<input type='file' onchange='importData(event)'>
+</div>
+<div id='content'></div>
+<script>
+const workouts={
+'Day 1 – Shoulders + Back + Biceps':[['Lat pulldown','compound'],['Chest-supported row','compound'],['Dumbbell shoulder press','compound'],['Cable lateral raise','isolation'],['Rear-delt fly','isolation'],['Incline dumbbell curl','isolation'],['Hammer curl','isolation']],
+'Day 2 – Quads + Glutes':[['Hack squat / Smith squat','compound'],['Romanian deadlift','compound'],['Reverse lunge','compound'],['Leg extension','isolation'],['Leg curl','isolation'],['Calf raise','isolation']],
+'Day 3 – Shoulders + Chest + Triceps':[['Incline dumbbell press','compound'],['Shoulder press','compound'],['Cable / pec-deck fly','isolation'],['Lateral raise','isolation'],['Rear-delt fly','isolation'],['Triceps pushdown','isolation'],['Overhead triceps extension','isolation']],
+'Day 4 – Back + Shoulders + Biceps':[['Assisted pull-up / lat pulldown','compound'],['Seated cable row','compound'],['Single-arm cable row','compound'],['Cable lateral raise','isolation'],['Face pull / rear-delt fly','isolation'],['EZ-bar or cable curl','isolation'],['Preacher curl','isolation']],
+'Day 5 – Glutes + Legs + Abs':[['Hip thrust','compound'],['Leg press','compound'],['Bulgarian split squat','compound'],['Seated leg curl','isolation'],['Hip abduction','isolation'],['Cable crunch','isolation'],['Hanging knee raise','isolation']]
+};
+Object.keys(workouts).forEach(d=>day.add(new Option(d,d)));
+let memoryStore={};
+function canStore(){try{localStorage.setItem('x','1');localStorage.removeItem('x');return true}catch(e){return false}}
+function getData(){return canStore()?JSON.parse(localStorage.getItem('gymV3')||'{}'):memoryStore}
+function saveData(d){if(canStore())localStorage.setItem('gymV3',JSON.stringify(d)); else memoryStore=d;}
+function target(last,type){let max=type==='compound'?12:14; if(!last) return 'Start with minimum reps';
+ if(last.s1>=max&&last.s2>=max&&last.s3>=max) return '✅ Increase weight next session';
+ let next=Math.min(max,Math.max(last.s1,last.s2,last.s3)+1); return '🎯 Target: '+next+'/'+next+'/'+next;}
+function loadWorkout(){let p=profile.value,d=getData(),w=day.value,out='';
+(workouts[w]||[]).forEach((e,i)=>{let hist=((d[p]||{})[e[0]]||[]);let last=hist[hist.length-1];
+out+=`<div class='card'><h3>${e[0]}</h3>
+<div><b>Last workout:</b> ${last?last.weight+'kg | '+last.s1+'/'+last.s2+'/'+last.s3:'None recorded'}</div>
+<div><b>${target(last,e[1])}</b></div>
+<div class='small'>${hist.length} logged workouts</div>
+Weight <input type='number' step='0.5' id='w${i}'>
+S1 <input type='number' id='a${i}'>
+S2 <input type='number' id='b${i}'>
+S3 <input type='number' id='c${i}'>
+<button onclick="saveExercise(${i},'${e[0]}')">Save</button>
+<button onclick="showHistory('${e[0]}')">History</button>
+</div>`});
+content.innerHTML=out;}
+function saveExercise(i,n){let d=getData(),p=profile.value; d[p]=d[p]||{}; d[p][n]=d[p][n]||[];
+d[p][n].push({date:new Date().toLocaleDateString(),weight:+document.getElementById('w'+i).value,s1:+document.getElementById('a'+i).value,s2:+document.getElementById('b'+i).value,s3:+document.getElementById('c'+i).value});
+saveData(d); loadWorkout();}
+function showHistory(n){let d=getData(),p=profile.value,h=((d[p]||{})[n]||[]); alert(n+'
+
+'+h.map(x=>x.date+' | '+x.weight+'kg | '+x.s1+'/'+x.s2+'/'+x.s3).join('
+'));}
+function addExercise(){let name=prompt('Exercise name'); if(!name)return; let dayName=prompt('Day number (1-5)'); let type=prompt('compound or isolation'); let key=Object.keys(workouts)[dayName-1]; workouts[key].push([name,type]); loadWorkout();}
+function exportData(){let a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(getData())]));a.download='gym_backup.json';a.click();}
+function importData(e){let r=new FileReader();r.onload=()=>{saveData(JSON.parse(r.result));alert('Imported');};r.readAsText(e.target.files[0]);}
+loadWorkout();
+</script></body></html>
