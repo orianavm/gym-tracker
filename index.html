@@ -305,7 +305,7 @@ Add Note
     ></textarea>
 
 </div>
-    <div class="btn-row"><button class="btn" onclick="saveExercise(${i},'${safe}','${e.type}')">Save exercise</button><button class="btn secondary" onclick="openHistory('${safe}')">History</button></div></article>`;
+    <div class="btn-row"><button class="btn" onclick="saveExercise(${i},'${safe}','${e.type}')">Save & Next</button><button class="btn secondary" onclick="openHistory('${safe}')">History</button></div></article>`;
 }
 function saveExercise(i,encodedName,type){
   const name=decodeURIComponent(encodedName), weight=Number($(`weight-${i}`).value), s1=Number($(`s1-${i}`).value),s2=Number($(`s2-${i}`).value),s3=Number($(`s3-${i}`).value),notes=$(`notes-${i}`).value.trim(),goal=goalFor(name,type);
@@ -355,8 +355,22 @@ function removeCustom(dayEncoded,index){const day=decodeURIComponent(dayEncoded)
 function exportBackup(){const blob=new Blob([JSON.stringify(state,null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`gym-tracker-backup-${new Date().toISOString().slice(0,10)}.json`;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)}
 function importBackup(event){const file=event.target.files[0];if(!file)return;const reader=new FileReader();reader.onload=()=>{try{const incoming=JSON.parse(reader.result);if(!incoming.profiles)throw new Error();state=incoming;persist();initialiseSelectors();renderAll();toast('Backup imported')}catch(e){alert('This is not a valid Gym Tracker backup.')}};reader.readAsText(file)}
 
-$('profileSelect').addEventListener('change',()=>{initialiseSelectors();renderAll()});
-$('daySelect').addEventListener('change',renderWorkout);
+$('profileSelect').addEventListener('change',()=>{
+
+    currentExerciseIndex = 0;
+
+    initialiseSelectors();
+
+    renderAll();
+
+});
+$('daySelect').addEventListener('change',()=>{
+
+    currentExerciseIndex = 0;
+
+    renderWorkout();
+
+});
 document.querySelectorAll('.navbtn').forEach(b=>b.addEventListener('click',()=>showView(b.dataset.view)));
 initialiseSelectors();renderAll();
 if('serviceWorker' in navigator)navigator.serviceWorker.register('./sw.js').catch(()=>{});
