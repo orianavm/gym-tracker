@@ -211,7 +211,36 @@ function renderWorkout(){
         )
     ).length;
 
+    $('workoutView').innerHTML = `
 
+        <div class="card">
+
+            <div class="exercise-head">
+
+                <div>
+
+                    <div class="eyebrow">
+                        Workout
+                    </div>
+
+                    <h2>${esc(day)}</h2>
+
+                </div>
+
+                <span class="badge">
+                    ${completed} / ${exercises.length}
+                    completed
+                </span>
+
+            </div>
+
+        </div>
+
+        ${exercises.map((e,i)=>exerciseSummaryCard(e,i)).join('')}
+
+    `;
+
+}
 
 function exerciseSummaryCard(e,i){
 
@@ -229,53 +258,9 @@ function exerciseSummaryCard(e,i){
             );
 
     return `
-
-        <div class="card">
-
-            <div class="exercise-head">
-
-                <div>
-
-                    <h3>
-                        ${done ? '✅' : '⬜'}
-                        ${esc(e.name)}
-                    </h3>
-
-                    <div class="small muted">
-
-                        ${
-                            last
-                            ?
-                            `${last.weight}kg • ${last.s1}/${last.s2}/${last.s3}`
-                            :
-                            'No previous record'
-                        }
-
-                    </div>
-
-                </div>
-
-                <button
-                    class="btn"
-                    onclick="openExercise('${safe}')">
-
-                    
-
-                    ${done ? 'Edit' : 'Log'}
-
-                </button>
-
-            </div>
-
-        </div>
-
+        ...
     `;
 }
-
-
-
-}
-
 
 function openExercise(encodedName){
 
