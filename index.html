@@ -505,8 +505,11 @@ $('daySelect').addEventListener('change',renderWorkout);
   
 document.querySelectorAll('.navbtn').forEach(b=>b.addEventListener('click',()=>showView(b.dataset.view)));
 initialiseSelectors();renderAll();
-if('serviceWorker' in navigator)navigator.serviceWorker.getRegistrations()
-.then(regs => regs.forEach(r => r.unregister()));.catch(()=>{});
+if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.getRegistrations()
+        .then(regs => regs.forEach(r => r.unregister()))
+        .catch(() => {});
+}
 </script>
 </body>
 </html>
