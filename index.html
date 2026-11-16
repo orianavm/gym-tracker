@@ -47,8 +47,6 @@
     <section id="settingsView" class="view"></section>
   </main>
 </div>
-
-let currentExerciseIndex = 0;
   
 <nav class="bottom-nav">
 
@@ -102,6 +100,7 @@ const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,8);
 function freshState(){return {version:4,profiles:{Oriana:{custom:{},history:{}}}},Chiara:{custom:{},history:{}}}}}
 function loadState(){try{const parsed=JSON.parse(localStorage.getItem(STORE_KEY)||'null');return parsed&&parsed.profiles?parsed:freshState()}catch(e){return freshState()}}
 let state=loadState();
+let currentExerciseIndex = 0;
 function persist(){localStorage.setItem(STORE_KEY,JSON.stringify(state))}
 function profileName(){return $('profileSelect').value}
 function profileData(){const p=profileName();state.profiles[p]=state.profiles[p]||{nextDay:0,custom:{},history:{}};return state.profiles[p]}
@@ -116,7 +115,7 @@ function goalFor(name,type){
   if(!last)return {rep:range.min,text:`${range.min}/${range.min}/${range.min}`,increase:false,weight:''};
   const currentTarget=Number(last.targetRep)||Math.max(range.min,Math.min(range.max,Math.min(last.s1,last.s2,last.s3)));
   const achieved=last.s1>=currentTarget&&last.s2>=currentTarget&&last.s3>=currentTarget;
-  if(currentTarget>=range.max&&achieved)return {rep:range.max,text:'Increase weight',increase:true,weight:last.weight};
+  if(currentTarget>=range.max&&achieved)return {rep:range.max,text:''✅ Goal achieved. Choose a new weight.'',increase:true,weight:last.weight};
   const next=achieved?Math.min(range.max,currentTarget+1):currentTarget;
   return {rep:next,text:`${next}/${next}/${next}`,increase:false,weight:last.weight};
 }
@@ -197,6 +196,11 @@ function renderWorkout(){
     }
   $('workoutView').innerHTML=`<div class="card"><div class="exercise-head"><div><div class="eyebrow">Workout</div><h2>${esc(day)}</h2></div><span class="badge">${completed}/${exs.length} logged today</span></div><div class="btn-row"><button class="btn success" onclick="completeWorkout()">Complete & advance queue</button></div></div>`+
  exerciseCard(
+   <div class="badge">
+Exercise ${currentExerciseIndex+1}
+of
+${exercisesFor(currentDay()).length}
+</div>
     exercise,
     currentExerciseIndex
 )
@@ -204,17 +208,59 @@ function renderWorkout(){
 function exerciseCard(e,i){
   const last=lastEntry(e.name), goal=goalFor(e.name,e.type), range=rangeFor(e.type), safe=encodeURIComponent(e.name);
   return `<article class="card" id="ex-${i}"><div class="exercise-head"><h3>${esc(e.name)}</h3><span class="badge">3 × ${range.min}–${range.max}</span></div>
-    <div class="last-goal"><div class="goalbox"><div class="stat-label">Last workout</div><div class="goalbig">${last?esc(last.weight)+' kg':'No record'}</div><div>${last?`${last.s1}/${last.s2}/${last.s3}`:'Start today'}</div></div><div class="goalbox"><div class="stat-label">Today's goal</div><div class="goalbig ${goal.increase?'green':''}">${goal.increase?'Increase':esc(goal.weight||'Set weight')+' kg'}</div><div>${esc(goal.text)}</div></div></div>
+    <div class="last-goal"><div class="goalbox"><div class="stat-label">Last workout</div><div class="goalbig">${last?esc(last.weight)+' kg':'No record'}</div><div>${last?`${last.s1}/${last.s2}/${last.s3}`:'Start today'}</div></div><div class="goalbox"><div class="stat-label">Today's goal</div><div class="goalbig ${goal.increase?'green':''}">
+    ${goal.increase
+?
+'Increase Weight'
+:
+esc(goal.weight||'Set Weight')+' kg'
+}</div><div>${esc(goal.text)}</div></div></div>
     ${goal.increase?'<div class="complete-strip">Top of the range achieved. Enter the new machine or dumbbell weight below.</div>':''}
     <label>Weight (kg)</label><input class="field" id="weight-${i}" inputmode="decimal" type="number" min="0" step="0.1" value="${last?esc(last.weight):''}" placeholder="e.g. 50">
     <div class="grid3"><div><div class="set-label">SET 1</div><input class="field" id="s1-${i}" inputmode="numeric" type="number" min="0" max="99" placeholder="Reps"></div><div><div class="set-label">SET 2</div><input class="field" id="s2-${i}" inputmode="numeric" type="number" min="0" max="99" placeholder="Reps"></div><div><div class="set-label">SET 3</div><input class="field" id="s3-${i}" inputmode="numeric" type="number" min="0" max="99" placeholder="Reps"></div></div>
-    <label>Notes (optional)</label><textarea class="field" id="notes-${i}" rows="2" placeholder="Seat position, grip, machine, technique..."></textarea>
+    <button
+    type="button"
+    class="btn secondary"
+    onclick="
+      const x=
+      document.getElementById(
+      'notes-wrap-${i}'
+      );
+
+      x.style.display=
+      x.style.display==='none'
+      ? 'block'
+      : 'none';
+    "
+>
+Add Note
+</button>
+
+<div
+    id="notes-wrap-${i}"
+    style="display:none;"
+>
+
+    <textarea
+        class="field"
+        id="notes-${i}"
+        rows="2"
+        placeholder="Optional"
+    ></textarea>
+
+</div>
     <div class="btn-row"><button class="btn" onclick="saveExercise(${i},'${safe}','${e.type}')">Save exercise</button><button class="btn secondary" onclick="openHistory('${safe}')">History</button></div></article>`;
 }
 function saveExercise(i,encodedName,type){
   const name=decodeURIComponent(encodedName), weight=Number($(`weight-${i}`).value), s1=Number($(`s1-${i}`).value),s2=Number($(`s2-${i}`).value),s3=Number($(`s3-${i}`).value),notes=$(`notes-${i}`).value.trim(),goal=goalFor(name,type);
   if(!(weight>0)||![s1,s2,s3].every(x=>x>0)){toast('Enter a weight and all 3 sets');return}
-  const p=profileData();p.history[name]=p.history[name]||[];p.history[name].push({id:uid(),timestamp:Date.now(),date:new Date().toLocaleDateString(),weight,s1,s2,s3,notes,targetRep:goal.rep,type});persist();renderAll();toast(`${name} saved`)
+  const p=profileData();p.history[name]=p.history[name]||[];p.history[name].push({id:uid(),timestamp:Date.now(),date:new Date().toLocaleDateString(),weight,s1,s2,s3,notes,targetRep:goal.rep,type});persist();
+
+currentExerciseIndex++;
+
+renderWorkout();
+
+toast(`${name} saved`);
 }
 function completeWorkout(){
   const selectedIndex=DAYS.indexOf(currentDay()),p=profileData();p.nextDay=(selectedIndex+1)%DAYS.length;persist();$('daySelect').value=DAYS[p.nextDay];renderAll();showView('dashboard');toast('Workout completed. Queue advanced')
