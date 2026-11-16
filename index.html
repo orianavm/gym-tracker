@@ -211,35 +211,7 @@ function renderWorkout(){
         )
     ).length;
 
-    $('workoutView').innerHTML = `
 
-        <div class="card">
-
-            <div class="exercise-head">
-
-                <div>
-
-                    <div class="eyebrow">
-                        Workout
-                    </div>
-
-                    <h2>${esc(day)}</h2>
-
-                </div>
-
-                <span class="badge">
-                    ${completed} / ${exercises.length}
-                    completed
-                </span>
-
-            </div>
-
-        </div>
-
-        ${exercises.map((e,i)=>exerciseSummaryCard(e,i)).join('')}
-
-    `;
-}
 
 function exerciseSummaryCard(e,i){
 
