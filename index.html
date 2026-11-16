@@ -238,7 +238,7 @@ function renderWorkout(){
     `;
 }
 
-function exerciseSummaryCard(e,i){
+function exerciseSummaryCard(e){
 
     const last = lastEntry(e.name);
 
@@ -254,7 +254,42 @@ function exerciseSummaryCard(e,i){
             );
 
     return `
-        ...
+
+        <div class="card">
+
+            <div class="exercise-head">
+
+                <div>
+
+                    <h3>
+                        ${done ? '✅' : '⬜'}
+                        ${esc(e.name)}
+                    </h3>
+
+                    <div class="small muted">
+
+                        ${
+                            last
+                            ? `${last.weight}kg • ${last.s1}/${last.s2}/${last.s3}`
+                            : 'No previous record'
+                        }
+
+                    </div>
+
+                </div>
+
+                <button
+                    class="btn"
+                    onclick="openExercise('${safe}')">
+
+                    ${done ? 'Edit' : 'Log'}
+
+                </button>
+
+            </div>
+
+        </div>
+
     `;
 }
 
